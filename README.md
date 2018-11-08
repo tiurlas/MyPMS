@@ -1,2 +1,0 @@
-# MyPMS
-Ferramenta de senha
