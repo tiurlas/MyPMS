@@ -1,0 +1,129 @@
+Ext.onReady(function(){
+    Ext.QuickTips.init(); 
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+
+    var myData = [
+        ['3m Co',                               71.72, 0.02,  0.03,  '9/1 12:00am'],
+        ['Alcoa Inc',                           29.01, 0.42,  -1.47,  '9/1 12:00am'],
+        ['Altria Group Inc',                    83.81, 0.28,  0.34,  '9/1 12:00am'],
+        ['American Express Company',            52.55, 0.01,  0.02,  '9/1 12:00am'],
+    ];
+
+    function change(val) {
+        if (val > 0) {
+            return '<span style="color:green;">' + val + '</span>';
+        } else if (val < 0) {
+            return '<span style="color:red;">' + val + '</span>';
+        }
+        return val;
+    }
+
+    function pctChange(val) {
+        if (val > 0) {
+            return '<span style="color:green;">' + val + '%</span>';
+        } else if (val < 0) {
+            return '<span style="color:red;">' + val + '%</span>';
+        }
+        return val;
+    }
+
+    var store = new Ext.data.ArrayStore({
+        fields: [
+           {name: 'company'},
+           {name: 'price',      type: 'float'},
+           {name: 'change',     type: 'float'},
+           {name: 'pctChange',  type: 'float'},
+           {name: 'lastChange', type: 'date', dateFormat: 'n/j h:ia'}
+        ]
+    });
+
+    store.loadData(myData);
+
+    // create the Grid
+    var grid = new Ext.grid.EditorGridPanel({
+        store: store,
+        columns: [
+            {
+                id       :'company',
+                header   : 'Company', 
+                width    : 160, 
+                sortable : true, 
+                dataIndex: 'company',
+
+		listeners: {
+		    'rowdblclick': function(grid, index, rec){
+			var row_label = grid.getSelectionModel().getSelected().id;
+			var row_label_parts = row_label.split('-');
+			var selected_index = row_label_parts[2] - 1;
+			alert(selected_index);
+		    }
+		}
+            },
+            {
+                header   : 'Price', 
+                width    : 75, 
+                sortable : true, 
+                renderer : 'usMoney', 
+                dataIndex: 'price',
+            },
+            {
+                header   : 'Change', 
+                width    : 75, 
+                sortable : true, 
+                renderer : change, 
+                dataIndex: 'change'
+            },
+            {
+                header   : '% Change', 
+                width    : 75, 
+                sortable : true, 
+                renderer : pctChange, 
+                dataIndex: 'pctChange'
+            },
+            {
+                header   : 'Last Updated', 
+                width    : 85, 
+                sortable : true, 
+                renderer : Ext.util.Format.dateRenderer('m/d/Y'), 
+                dataIndex: 'lastChange'
+            },
+            {
+                xtype: 'actioncolumn',
+                width: 50,
+                items: [{
+                    icon   : '../shared/icons/fam/delete.gif',  // Use a URL in the icon config
+                    tooltip: 'Sell stock',
+                    handler: function(grid, rowIndex, colIndex) {
+                        var rec = store.getAt(rowIndex);
+                        alert("Sell " + rec.get('company'));
+                    }
+                }, {
+                    getClass: function(v, meta, rec) {          // Or return a class from a function
+                        if (rec.get('change') < 0) {
+                            this.items[1].tooltip = 'Do not buy!';
+                            return 'alert-col';
+                        } else {
+                            this.items[1].tooltip = 'Buy stock';
+                            return 'buy-col';
+                        }
+                    },
+                    handler: function(grid, rowIndex, colIndex) {
+                        var rec = store.getAt(rowIndex);
+                        alert("Buy " + rec.get('company'));
+                    }
+                }]
+            }
+        ],
+        stripeRows: true,
+        autoExpandColumn: 'company',
+        height: 350,
+        width: 600,
+        title: 'Array Grid',
+        // config options for stateful behavior
+        stateful: true,
+        stateId: 'grid'
+    });
+
+    // render the grid to the specified div in the page
+    grid.render('grid-example');
+});
